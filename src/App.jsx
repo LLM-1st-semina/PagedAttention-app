@@ -18,16 +18,16 @@ const COLORS = [
 ];
 
 const RAW_DATA = [
-  { id: 'TK-1001', intent: 'Account_Unlock', text: "로그인이 안 됩니다. 계정이 잠긴 것 같아요.", len: 5 },
-  { id: 'TK-1002', intent: 'Refund_Request', text: "구독 취소했는데 결제가 되었습니다.", len: 6 },
-  { id: 'TK-1003', intent: 'Bug_Report', text: "API 500 에러 발생 (로그 첨부).", len: 12 }, 
-  { id: 'TK-1004', intent: 'Feature_Request', text: "다크 모드 기능은 언제 추가되나요?", len: 3 },
-  { id: 'TK-1005', intent: 'Payment_Change', text: "결제 카드를 법인 카드로 변경하고 싶습니다.", len: 5 },
-  { id: 'TK-1006', intent: 'General_Inquiry', text: "이 서비스 무료 체험 기간이 며칠인가요?", len: 4 },
-  { id: 'TK-1007', intent: 'Bug_Report', text: "대시보드 데이터 갱신 안됨.", len: 3 },
-  { id: 'TK-1008', intent: 'Account_Closure', text: "탈퇴 버튼이 안 보입니다.", len: 2 },
-  { id: 'TK-1009', intent: 'Feature_Request', text: "PDF 내보내기 기능 필요함. 긴급.", len: 10 }, 
-  { id: 'TK-1010', intent: 'Invoicing', text: "영수증 이메일 발송 요청.", len: 3 },
+  { id: 'REQ-1001', intent: 'Account_Unlock', text: "로그인이 안 됩니다. 계정이 잠긴 것 같아요.", len: 5 },
+  { id: 'REQ-1002', intent: 'Refund_Request', text: "구독 취소했는데 결제가 되었습니다.", len: 6 },
+  { id: 'REQ-1003', intent: 'Bug_Report', text: "API 500 에러 발생 (로그 첨부).", len: 12 }, 
+  { id: 'REQ-1004', intent: 'Feature_Request', text: "다크 모드 기능은 언제 추가되나요?", len: 3 },
+  { id: 'REQ-1005', intent: 'Payment_Change', text: "결제 카드를 법인 카드로 변경하고 싶습니다.", len: 5 },
+  { id: 'REQ-1006', intent: 'General_Inquiry', text: "이 서비스 무료 체험 기간이 며칠인가요?", len: 4 },
+  { id: 'REQ-1007', intent: 'Bug_Report', text: "대시보드 데이터 갱신 안됨.", len: 3 },
+  { id: 'REQ-1008', intent: 'Account_Closure', text: "탈퇴 버튼이 안 보입니다.", len: 2 },
+  { id: 'REQ-1009', intent: 'Feature_Request', text: "PDF 내보내기 기능 필요함. 긴급.", len: 10 }, 
+  { id: 'REQ-1010', intent: 'Invoicing', text: "영수증 이메일 발송 요청.", len: 3 },
 ];
 
 const FULL_DATASET = Array.from({ length: 50 }).map((_, i) => {
@@ -36,7 +36,7 @@ const FULL_DATASET = Array.from({ length: 50 }).map((_, i) => {
     
     return { 
         ...template, 
-        id: `TK-${1000+i+1}`, 
+        id: `REQ-${1000+i+1}`, 
         hexColor: COLORS[i % COLORS.length],
         stdBlocks 
     };
@@ -143,18 +143,12 @@ const App = () => {
     let tempRequests = [...requests];
     let evictedCount = 0;
 
-    // [수정됨] Evict FIFO (Sliding Window)
-    // 메모리가 부족하면 가장 오래된 요청(0번 인덱스)부터 삭제하여 공간 확보
+    // Evict FIFO (Sliding Window)
     while (!result.success && tempRequests.length > 0) {
-        // FIFO Victim Selection: 가장 오래된 요청 선택
         const victim = tempRequests[0]; 
-        
-        // Free Memory
         victim.allocatedIndices.forEach(idx => tempMemory[idx] = null);
-        tempRequests.shift(); // Remove from front (Queue 방식)
+        tempRequests.shift(); 
         evictedCount++;
-
-        // Retry Allocation
         result = allocateToMemory(data, tempMemory);
     }
 
@@ -166,7 +160,7 @@ const App = () => {
         setNextReqIndex(prev => prev + 1);
 
         if (evictedCount > 0) {
-            addLog(`Context Window 확보: 오래된 대화 ${evictedCount}건 삭제됨`, "warning");
+            addLog(`Context Window 확보: 오래된 요청 ${evictedCount}건 삭제됨`, "warning");
         } else {
             addLog(`${data.id} 할당 성공`, "success");
         }
@@ -224,7 +218,7 @@ const App = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-400 uppercase tracking-widest">SYSTEM STANDBY</h2>
-                  <p className="text-xs">데이터 할당을 시작하려면 우측 'Add Ticket' 버튼을 누르세요.</p>
+                  <p className="text-xs">데이터 할당을 시작하려면 우측 'Add Request' 버튼을 누르세요.</p>
                 </div>
              </div>
           )}
@@ -246,7 +240,7 @@ const App = () => {
           </div>
           <div className="flex gap-2">
             <button onClick={handleAddWithContextWindow} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-              <Plus className="w-4 h-4"/> Add Ticket
+              <Plus className="w-4 h-4"/> Add Request
             </button>
             <button onClick={manualRemove} className="px-4 py-2 border border-slate-600 text-slate-400 hover:bg-slate-700 hover:text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center">
               <Trash2 className="w-4 h-4"/>
@@ -330,7 +324,7 @@ const App = () => {
         {/* --- Main Area --- */}
         <main className="flex-1 flex flex-col gap-4 min-w-0">
             
-          {/* [추가됨] LOGICAL VIEW (Model View) */}
+          {/* LOGICAL VIEW (Model View) */}
           <div className="h-24 bg-slate-800/30 border border-slate-700 rounded-2xl p-4 flex flex-col relative overflow-hidden flex-none">
              <div className="flex justify-between items-center mb-2">
                  <h2 className="text-xs font-bold flex items-center gap-2 tracking-tight text-indigo-300">
@@ -403,7 +397,7 @@ const App = () => {
                         <div key={i} className={`group relative bg-slate-900/80 border p-2 rounded-xl transition-all duration-300 h-20 flex flex-col justify-between
                           ${occupied ? 'border-slate-700' : 'border-dashed border-slate-700/50'}
                           ${isHovered ? 'border-indigo-500 ring-2 ring-indigo-500/20 z-20' : ''}
-                          ${isDimmed ? 'opacity-20 blur-[1px]' : ''}
+                          ${isDimmed ? 'opacity-50' : ''} 
                         `}>
                           {occupied ? (
                             <>
@@ -443,7 +437,7 @@ const App = () => {
                         <div key={i} className={`relative group h-14 bg-slate-900/80 border rounded-lg transition-all duration-300 flex flex-col items-center justify-center overflow-hidden
                           ${occupied ? 'border-slate-700' : 'border-dashed border-slate-800'}
                           ${isHovered ? 'border-indigo-500 ring-2 ring-indigo-500/20 z-20' : ''}
-                          ${isDimmed ? 'opacity-10 blur-[2px]' : ''}
+                          ${isDimmed ? 'opacity-50' : ''}
                         `}>
                           <span className="absolute top-0.5 left-1 text-[6px] text-slate-600 font-mono font-bold z-10">P{i}</span>
                           {occupied ? (
